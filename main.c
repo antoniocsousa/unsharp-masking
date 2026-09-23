@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 // Definicao das dimensoes fixas da matriz (100x80 = 8000 elementos float = 32 Kbytes)
-#define HEIGHT 100
-#define WIDTH 80
+#define HEIGHT 360
+#define WIDTH 250
 
 // Estrutura de dados contendo as matrizes estaticas de 8000 floats
 typedef struct {
@@ -33,17 +33,24 @@ int load_pgm(const char *nome_arquivo) {
     char formato[3];
     int max_valor, w, h;
 
-    // if (fscanf(arquivo, "%d %d %d", &w, &h, &max_valor) != 3) {
-    //     printf("Erro ao ler dimensoes do cabecalho PGM.\n");
-    //     fclose(arquivo);
-    //     return 0;
-    // }
+    // Le o cabecalho da imagem PGM
+    if (fscanf(arquivo, "%2s", formato) != 1 || formato[0] != 'P' || formato[1] != '2') {
+        printf("Erro: O arquivo deve estar no formato PGM P2.\n");
+        fclose(arquivo);
+        return 0;
+    }
 
-    // if (w != WIDTH || h != HEIGHT) {
-    //     printf("Erro: A imagem deve ter tamanho exato de %dx%d pixels.\n", WIDTH, HEIGHT);
-    //     fclose(arquivo);
-    //     return 0;
-    // }
+    if (fscanf(arquivo, "%d %d %d", &w, &h, &max_valor) != 3) {
+        printf("Erro ao ler dimensoes do cabecalho PGM.\n");
+        fclose(arquivo);
+        return 0;
+    }
+
+    if (w != WIDTH || h != HEIGHT) {
+        printf("Erro: A imagem deve ter tamanho exato de %dx%d pixels.\n", WIDTH, HEIGHT);
+        fclose(arquivo);
+        return 0;
+    }
 
     // Le os pixels da imagem para a matriz estatica float
     for (int i = 0; i < HEIGHT; i++) {
@@ -130,7 +137,7 @@ void unsharp_masking(float ganho_k) {
 int main() {
     const char *arquivo_entrada = "monalisa.pgm";
     const char *arquivo_saida = "monalisa_after.pgm";
-    float ganho_k = 1.5f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
+    float ganho_k = 3.0f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
 
     printf("Iniciando o processamento do Unsharp Masking...\n");
 
