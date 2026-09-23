@@ -9,6 +9,7 @@
 typedef struct {
     float original[HEIGHT][WIDTH];
     float suavizada[HEIGHT][WIDTH];
+    float mascara[HEIGHT][WIDTH];
     float resultado[HEIGHT][WIDTH];
 } DadosImagem;
 
@@ -67,7 +68,7 @@ int load_pgm(const char *nome_arquivo) {
 
 
 // Função para salvar a imagem resultante em arquivo PGM
-void save_pgm(const char *nome_arquivo) {
+void save_pgm(const char *nome_arquivo, float image[HEIGHT][WIDTH]) {
     FILE *arquivo = fopen(nome_arquivo, "w");
     if (!arquivo) {
         printf("Erro ao criar o arquivo %s para escrita.\n", nome_arquivo);
@@ -82,7 +83,7 @@ void save_pgm(const char *nome_arquivo) {
     // Escreve a matriz resultante tratando o truncamento de limites (0 a 255)
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
-            float val = img.resultado[i][j];
+            float val = image[i][j];
             
             if (val < 0.0f) val = 0.0f;
             if (val > 255.0f) val = 255.0f;
@@ -98,6 +99,7 @@ void save_pgm(const char *nome_arquivo) {
 // Algoritmo Unsharp Masking
 void unsharp_masking(float ganho_k) {
     int margem = 3 / 2;
+    const char *arquivo_blur = "monalisa-blur.pgm";
 
     // ETAPA 1: Gerar a imagem suavizada via Convolucao 2D (4 laços aninhados)
     for (int i = 0; i < HEIGHT; i++) {
@@ -122,21 +124,24 @@ void unsharp_masking(float ganho_k) {
         }
     }
 
+    save_pgm(arquivo_blur, img.suavizada);
+
     // ETAPA 2 e 3: Subtração da Máscara e Soma Ponderada (2 laços aninhados)
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             // mascara = original - suavizada
-            float mascara = img.original[i][j] - img.suavizada[i][j];
+            img.mascara[i][j] = img.original[i][j] - img.suavizada[i][j];
 
             // imagem_final = original + (k * mascara)
-            img.resultado[i][j] = img.original[i][j] + (ganho_k * mascara);
+            img.resultado[i][j] = img.original[i][j] + (ganho_k * img.mascara[i][j]);
         }
     }
 }
 
 int main() {
     const char *arquivo_entrada = "monalisa.pgm";
-    const char *arquivo_saida = "monalisa_after.pgm";
+    const char *arquivo_mask = "monalisa-mask.pgm";
+    const char *arquivo_saida = "monalisa-after.pgm";
     float ganho_k = 3.0f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
 
     printf("Iniciando o processamento do Unsharp Masking...\n");
@@ -151,7 +156,8 @@ int main() {
     unsharp_masking(ganho_k);
 
     // 3. Salva os resultados
-    save_pgm(arquivo_saida);
+    save_pgm(arquivo_saida, img.resultado);
+    save_pgm(arquivo_mask, img.mascara);
 
     printf("Processamento concluido com sucesso!\n");
     printf("Arquivo gerado: %s\n", arquivo_saida);
