@@ -3,10 +3,21 @@
 
 // Kernel de desfoque por media (3x3), onde cada elemento vale 1/9
 static const float kernel_desfoque[3][3] = {
-    {1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f},
-    {1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f},
-    {1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f}
+    {1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f},
+    {2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f},
+    {1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f}
 };
+
+// Função auxiliar que aplica o tratamento de borda REFLECT (espelhamento)
+int refletir_indice(int p, int max) {
+    if (p < 0) {
+        return -p;                  // Espelha para a direita se for negativo (ex: -1 vira 1)
+    }
+    if (p >= max) {
+        return 2 * max - p - 2;     // Espelha para a esquerda se estourar o limite maximo
+    }
+    return p;
+}
 
 // Algoritmo Unsharp Masking
 void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, float ganho_k) {
@@ -54,19 +65,16 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
     // ETAPA 1: Gerar a imagem suavizada via Convolucao 2D (4 laços aninhados)
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            
-            // Trata as bordas copiando o pixel original
-            if (i < margem || i >= height - margem || j < margem || j >= width - margem) {
-                resultado[i][j] = original[i][j];
-                continue;
-            }
-
             float soma_ponderada = 0.0f;
 
-            // Lacos internos da janela/kernel
+            // Laços internos do kernel
             for (int ki = -margem; ki <= margem; ki++) {
                 for (int kj = -margem; kj <= margem; kj++) {
-                    soma_ponderada += original[i + ki][j + kj] * kernel_desfoque[ki + margem][kj + margem];
+                    // Calcula os índices refletidos caso a janela saia da imagem
+                    int idx_i = refletir_indice(i + ki, height);
+                    int idx_j = refletir_indice(j + kj, width);
+
+                    soma_ponderada += original[idx_i][idx_j] * kernel_desfoque[ki + margem][kj + margem];
                 }
             }
 
