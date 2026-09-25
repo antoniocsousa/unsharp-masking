@@ -125,7 +125,7 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
 int main() {
     const char *arquivo_entrada = "monalisa.pgm";
     const char *arquivo_saida = "monalisa-after.pgm";
-    float ganho_k = 3.0f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
+    float ganho_k = 1.0f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
 
     printf("Iniciando o processamento do Unsharp Masking...\n");
 
