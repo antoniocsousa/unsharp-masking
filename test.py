@@ -5,8 +5,8 @@ import numpy as np
 # COMPARAÇÃO PIXEL A PIXEL
 # ==========================================================
 
-ARQUIVO_C = "monalisa-after.pgm"
-ARQUIVO_OPENCV = "monalisa-after-opencv.pgm"
+ARQUIVO_C = "images_C/monalisa.pgm"
+ARQUIVO_PYTHON = "images_Python/monalisa.pgm"
 
 resultado_c = cv2.imread(
     ARQUIVO_C,
@@ -14,7 +14,7 @@ resultado_c = cv2.imread(
 )
 
 resultado_opencv = cv2.imread(
-    ARQUIVO_OPENCV,
+    ARQUIVO_PYTHON,
     cv2.IMREAD_GRAYSCALE
 )
 

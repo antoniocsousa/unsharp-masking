@@ -1,76 +1,134 @@
-import cv2
-import numpy as np
+import torch
+import kornia as K
 
 
-ARQUIVO_ENTRADA = "monalisa.pgm"
-ARQUIVO_OPENCV = "monalisa-after-opencv.pgm"
+def read_pgm_p2(filename):
+    """Lê um arquivo PGM P2."""
 
-GANHO_K = 1.0
+    with open(filename, "r") as f:
+        # Remove comentários
+        tokens = []
+        for line in f:
+            line = line.split("#")[0]
+            tokens.extend(line.split())
+
+    if tokens[0] != "P2":
+        raise ValueError("O arquivo não é um PGM P2.")
+
+    width = int(tokens[1])
+    height = int(tokens[2])
+    max_value = int(tokens[3])
+
+    pixels = list(map(int, tokens[4:]))
+
+    if len(pixels) != width * height:
+        raise ValueError(
+            f"Número de pixels incorreto: "
+            f"esperado {width * height}, encontrado {len(pixels)}"
+        )
+
+    image = torch.tensor(
+        pixels,
+        dtype=torch.float32
+    ).reshape(height, width)
+
+    return image, width, height, max_value
 
 
-# Mesmo kernel utilizado no programa C
-kernel = np.array([
-    [1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0],
-    [2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0],
-    [1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0]
-], dtype=np.float32)
+def save_pgm_p2(filename, image, max_value):
+    """Salva uma imagem como PGM P2."""
+
+    height, width = image.shape
+
+    with open(filename, "w") as f:
+        f.write("P2\n")
+        f.write(f"{width} {height}\n")
+        f.write(f"{max_value}\n")
+
+        for row in image:
+            for pixel in row:
+                f.write(f"{int(pixel)} ")
+            f.write("\n")
 
 
-# ==========================================================
-# Leitura da imagem original
-# ==========================================================
+def main():
 
-original = cv2.imread(
-    ARQUIVO_ENTRADA,
-    cv2.IMREAD_GRAYSCALE
-)
+    input_file = "images/monalisa.pgm"
+    output_file = "images_Python/monalisa.pgm"
 
-if original is None:
-    raise RuntimeError("Não foi possível abrir a imagem original.")
+    # --------------------------------------------------
+    # 1. Ler PGM P2
+    # --------------------------------------------------
 
-# ==========================================================
-# ETAPA 1
-# Convolução utilizando exatamente o mesmo kernel
-# ==========================================================
+    image, width, height, max_value = read_pgm_p2(input_file)
 
-suavizada = cv2.filter2D(
-    original.astype(np.float32),
-    -1,
-    kernel,
-    borderType=cv2.BORDER_REFLECT_101
-)
+    print(f"Imagem: {width} x {height}")
+    print(f"MAXVAL: {max_value}")
 
-# ==========================================================
-# ETAPA 2 e 3
-# máscara = original - suavizada
-#
-# resultado = original + k * máscara
-# ==========================================================
+    # --------------------------------------------------
+    # 2. Normalizar para [0, 1]
+    # --------------------------------------------------
 
-original_float = original.astype(np.float32)
+    image = image / max_value
 
-mascara = original_float - suavizada
+    # --------------------------------------------------
+    # 3. Adicionar dimensões para a Kornia
+    #
+    # H x W
+    #   ↓
+    # B x C x H x W
+    #   ↓
+    # 1 x 1 x H x W
+    # --------------------------------------------------
 
-resultado = original_float + GANHO_K * mascara
+    image = image.unsqueeze(0).unsqueeze(0)
 
-# ==========================================================
-# Mesmo tratamento utilizado no C
-# ==========================================================
+    # --------------------------------------------------
+    # 4. Unsharp Mask da Kornia
+    # --------------------------------------------------
 
-resultado = np.clip(resultado, 0.0, 255.0)
+    result = K.filters.unsharp_mask(
+        image,
+        kernel_size=(3, 3),
+        sigma=(1.0, 1.0)
+    )
 
-# Equivalente ao:
-#
-# (int)(val + 0.5f)
-#
-# do C
-resultado = np.floor(resultado + 0.5).astype(np.uint8)
+    # --------------------------------------------------
+    # 5. Remover dimensões B e C
+    # --------------------------------------------------
 
-# ==========================================================
-# Salva resultado do OpenCV
-# ==========================================================
+    result = result.squeeze(0).squeeze(0)
 
-cv2.imwrite(
-    ARQUIVO_OPENCV,
-    resultado
-)
+    # --------------------------------------------------
+    # 6. Voltar de [0, 1] para [0, MAXVAL]
+    # --------------------------------------------------
+
+    result = result * max_value
+
+    # --------------------------------------------------
+    # 7. Clipping
+    # --------------------------------------------------
+
+    result = torch.clamp(result, 0, max_value)
+
+    # --------------------------------------------------
+    # 8. Converter para inteiro
+    # --------------------------------------------------
+
+    result = result.round().to(torch.int32)
+
+    # --------------------------------------------------
+    # 9. Salvar PGM P2
+    # --------------------------------------------------
+
+    save_pgm_p2(
+        output_file,
+        result,
+        max_value
+    )
+
+    print(f"Resultado salvo em: {output_file}")
+
+
+if __name__ == "__main__":
+    main()

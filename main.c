@@ -3,9 +3,9 @@
 
 // Kernel de desfoque por media (3x3), onde cada elemento vale 1/9
 static const float kernel_desfoque[3][3] = {
-    {1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f},
-    {2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f},
-    {1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f}
+    {0.07511361f, 0.12384140f, 0.07511361f},
+    {0.12384140f, 0.20417996f, 0.12384140f},
+    {0.07511361f, 0.12384140f, 0.07511361f}
 };
 
 // Função auxiliar que aplica o tratamento de borda REFLECT (espelhamento)
@@ -123,8 +123,8 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
 }
 
 int main() {
-    const char *arquivo_entrada = "monalisa.pgm";
-    const char *arquivo_saida = "monalisa-after.pgm";
+    const char *arquivo_entrada = "images/monalisa.pgm";
+    const char *arquivo_saida = "images_C/monalisa.pgm";
     float ganho_k = 1.0f; // Fator de intensidade do realce (tipicamente entre 0.5 e 2.0)
 
     printf("Iniciando o processamento do Unsharp Masking...\n");
