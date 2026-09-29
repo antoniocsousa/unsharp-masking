@@ -45,7 +45,7 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
     float original[height][width];
     float resultado[height][width];
 
-    // Le os pixels da imagem para a matriz estatica float
+    // Le os pixels da imagem para a matriz estatica float "original"
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             int pixel;
@@ -60,7 +60,7 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
     // ========== PROCESSAMENTO DO UNSHARP MASKING ==========
     int margem = 3 / 2;
 
-    // ETAPA 1: Gerar a imagem suavizada via Convolucao 2D (4 laços aninhados)
+    // ETAPA 1: Gerar a imagem suavizada com filtro gaussiano
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             float soma_ponderada = 0.0f;
@@ -76,7 +76,8 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
                 }
             }
 
-            resultado[i][j] = soma_ponderada;
+            // Utiliza a matriz "resultado" para guardar a imagem suavizada, evitando uma matriz "suavizada" intermediária
+            resultado[i][j] = soma_ponderada;  
         }
     }
 
@@ -87,7 +88,7 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
             float mascara = original[i][j] - resultado[i][j];
 
             // imagem_final = original + (k * mascara)
-            resultado[i][j] = original[i][j] + (ganho_k * mascara);
+            resultado[i][j] = original[i][j] + (ganho_k * mascara);  // Utiliza a mesma matriz "resultado" para guardar a imagem final
         }
     }
 
@@ -123,6 +124,7 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
 int main(int argc, char *argv[]) {
     // const char *arquivo_entrada = "images/monalisa.pgm";
     // const char *arquivo_saida = "images_C/monalisa.pgm";
+
     float ganho_k = 1.0f; // Fator de intensidade do realce
 
     printf("Iniciando o processamento do Unsharp Masking...\n");
