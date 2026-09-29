@@ -7,7 +7,7 @@ static const float kernel_desfoque[3][3] = {
     {0.07511361f, 0.12384140f, 0.07511361f}
 };
 
-// Função auxiliar que aplica o tratamento de borda REFLECT (espelhamento)
+// Função auxiliar que aplica o tratamento de borda (espelhamento)
 int refletir_indice(int p, int max) {
     if (p < 0) {
         return -p;                  // Espelha para a direita se for negativo (ex: -1 vira 1)
@@ -20,6 +20,7 @@ int refletir_indice(int p, int max) {
 
 // Algoritmo Unsharp Masking
 void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, float ganho_k) {
+    // ========== CARREGA A IMAGEM ==========
     FILE *arquivo = fopen(arquivo_entrada, "r");
     if (!arquivo) {
         printf("Erro ao abrir o arquivo %s para leitura.\n", arquivo_entrada);
@@ -122,17 +123,15 @@ void unsharp_masking(const char *arquivo_entrada, const char *arquivo_saida, flo
 }
 
 int main(int argc, char *argv[]) {
-    // const char *arquivo_entrada = "images/monalisa.pgm";
-    // const char *arquivo_saida = "images_C/monalisa.pgm";
-
     float ganho_k = 1.0f; // Fator de intensidade do realce
 
-    printf("Iniciando o processamento do Unsharp Masking...\n");
+    printf("Iniciando o processamento do Unsharp Masking\n");
 
     unsharp_masking(argv[1], argv[2], ganho_k);
 
     printf("Processamento concluido com sucesso!\n");
     printf("Arquivo gerado: %s\n", argv[2]);
+    printf("===========================================================");
 
     return 0;
 }
