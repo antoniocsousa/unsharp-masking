@@ -36,7 +36,7 @@ def read_pgm(filename):
     return image, width, height, max_value
 
 
-def save_pgm_p2(filename, image, max_value):
+def save_pgm(filename, image, max_value):
     """Salva uma imagem como PGM."""
 
     height, width = image.shape
@@ -58,71 +58,39 @@ def main():
 
     image, width, height, max_value = read_pgm(input_file)
 
-    print(f"Imagem: {width} x {height}")
-    print(f"MAXVAL: {max_value}")
-
-    # --------------------------------------------------
-    # 2. Normalizar para [0, 1]
-    # --------------------------------------------------
+    # Normalizar para [0, 1]
     image = image / max_value
 
-    # --------------------------------------------------
-    # 3. Adicionar dimensões para a Kornia
-    #
+    # Adicionar dimensões para a Kornia
     # H x W
     #   ↓
-    # B x C x H x W
-    #   ↓
     # 1 x 1 x H x W
-    # --------------------------------------------------
-
     image = image.unsqueeze(0).unsqueeze(0)
 
-    # --------------------------------------------------
-    # 4. Unsharp Mask da Kornia
-    # --------------------------------------------------
-
+    # Unsharp Mask da Kornia
     result = K.filters.unsharp_mask(
         image,
         kernel_size=(3, 3),
         sigma=(1.0, 1.0)
     )
 
-    # --------------------------------------------------
-    # 5. Remover dimensões B e C
-    # --------------------------------------------------
-
+    # Remover dimensões B e C
     result = result.squeeze(0).squeeze(0)
 
-    # --------------------------------------------------
-    # 6. Voltar de [0, 1] para [0, MAXVAL]
-    # --------------------------------------------------
-
+    # Voltar de [0, 1] para [0, MAXVAL]
     result = result * max_value
 
-    # --------------------------------------------------
-    # 7. Clipping
-    # --------------------------------------------------
-
+    # Clipping
     result = torch.clamp(result, 0, max_value)
 
-    # --------------------------------------------------
-    # 8. Converter para inteiro
-    # --------------------------------------------------
-
+    # Converter para inteiro
     result = result.round().to(torch.int32)
 
-    # --------------------------------------------------
-    # 9. Salvar PGM P2
-    # --------------------------------------------------
-
-    save_pgm_p2(
+    save_pgm(
         output_file,
         result,
         max_value
     )
-
-    print(f"Resultado salvo em: {output_file}")
 
 
 if __name__ == "__main__":

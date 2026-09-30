@@ -131,17 +131,11 @@ void unsharp_masking(float ganho_k) {
 int main(int argc, char *argv[]) {
     float ganho_k = 1.0f; // Fator de intensidade do realce
 
-    printf("Iniciando o processamento do Unsharp Masking\n");
-
     load_image(argv[1]);
 
     unsharp_masking(ganho_k);
 
     save_image(argv[2]);
-
-    printf("Processamento concluido com sucesso!\n");
-    printf("Arquivo gerado: %s\n", argv[2]);
-    printf("==============================================================\n");
 
     return 0;
 }
