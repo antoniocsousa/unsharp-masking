@@ -32,26 +32,31 @@ int refletir_indice(int p, int max) {
 }
 
 // ========== CARREGA A IMAGEM ==========
-void load_image(const char *arquivo_entrada) {
+int load_image(const char *arquivo_entrada) {
     FILE *arquivo = fopen(arquivo_entrada, "r");
     if (!arquivo) {
         printf("Erro ao abrir o arquivo %s para leitura.\n", arquivo_entrada);
-        return;
+        return 1;
     }
 
     // Le o cabecalho da imagem PGM
     if (fscanf(arquivo, "%2s", formato) != 1 || formato[0] != 'P' || formato[1] != '2') {
         printf("Erro: O arquivo deve estar no formato PGM P2.\n");
         fclose(arquivo);
-        return;
+        return 1;
     }
 
     if (fscanf(arquivo, "%d %d %d", &width, &height, &max_valor) != 3) {
         printf("Erro ao ler dimensoes do cabecalho PGM.\n");
         fclose(arquivo);
-        return;
+        return 1;
     }
-
+    
+    if (width*height*sizeof(float) < 8000) {
+        printf("Erro! A entrada deve ser de pelo menos 8Kbytes.\n");
+        return 1;
+    }
+    
     // Le os pixels da imagem para a matriz estatica float "original"
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -62,6 +67,7 @@ void load_image(const char *arquivo_entrada) {
     }
 
     fclose(arquivo);
+    return 0;
 }
 
 // ========== SALVA IMAGEM PROCESSADA ==========
@@ -131,7 +137,9 @@ void unsharp_masking(float ganho_k) {
 int main(int argc, char *argv[]) {
     float ganho_k = 1.0f; // Fator de intensidade do realce
 
-    load_image(argv[1]);
+    if (load_image(argv[1])) {
+        return 1;
+    }
 
     unsharp_masking(ganho_k);
 
