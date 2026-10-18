@@ -101,7 +101,7 @@
  * Define a quantidade máxima de linhas que podem ser armazenadas nas matrizes
  * utilizadas pelo programa.
  */
-#define MAX_HEIGHT 512
+#define MAX_HEIGHT 64
 
 
 /**
@@ -110,7 +110,7 @@
  * Define a quantidade máxima de colunas que podem ser armazenadas nas matrizes
  * utilizadas pelo programa.
  */
-#define MAX_WIDTH 512
+#define MAX_WIDTH 64
 
 
 /**
@@ -126,16 +126,17 @@
  * As matrizes utilizam são do tipo float para permitir que os cálculos
  * realizados durante a convolução e o realce sejam feitos com maior precisão.
  */
-typedef struct {
-    float original[MAX_HEIGHT][MAX_WIDTH];
-    float resultado[MAX_HEIGHT][MAX_WIDTH];
-} DadosImagem;
+float original[MAX_HEIGHT][MAX_WIDTH];
+float resultado[MAX_HEIGHT][MAX_WIDTH];
+
+char *arquivo_desfoque = "./mona_lisa_desfoque.pgm";
+char *arquivo_mascara = "./mona_lisa_mascara.pgm";
 
 
 /**
  * @brief Estrutura global contendo os dados da imagem.
  */
-static DadosImagem img;
+
 
 
 /**
@@ -212,7 +213,7 @@ int refletir_indice(int p, int max) {
  *
  * Abre o arquivo de entrada, verifica se ele está no formato PGM P2,
  * lê as dimensões e o valor máximo dos pixels e carrega todos
- * os pixels para a matriz global img.original.
+ * os pixels para a matriz global original.
  *
  * @param arquivo_entrada Caminho para o arquivo PGM P2 de entrada.
  *
@@ -232,10 +233,7 @@ int load_image(const char *arquivo_entrada) {
     }
 
     // Lê o identificador do formato PGM.
-    if (fscanf(arquivo, "%2s", formato) != 1 ||
-        formato[0] != 'P' ||
-        formato[1] != '2') {
-
+    if (fscanf(arquivo, "%2s", formato) != 1 || formato[0] != 'P' || formato[1] != '2') {
         printf("Erro: O arquivo deve estar no formato PGM P2.\n");
         fclose(arquivo);
         return 1;
@@ -263,7 +261,7 @@ int load_image(const char *arquivo_entrada) {
 
             fscanf(arquivo, "%d", &pixel);
 
-            img.original[i][j] = (float)pixel;
+            original[i][j] = (float)pixel;
         }
     }
 
@@ -278,7 +276,7 @@ int load_image(const char *arquivo_entrada) {
  * @brief Salva a imagem processada em um arquivo PGM P2.
  *
  * Cria o arquivo de saída, escreve o cabeçalho PGM e, em seguida,
- * grava os valores armazenados na matriz global img.resultado.
+ * grava os valores armazenados na matriz global resultado.
  *
  * @param arquivo_saida Caminho para o arquivo PGM P2 de saída.
  *
@@ -305,7 +303,7 @@ void save_image(const char *arquivo_saida) {
 
         for (int j = 0; j < width; j++) {
 
-            float val = img.resultado[i][j];
+            float val = resultado[i][j];
 
             // Garante que nenhum pixel fique abaixo do limite inferior permitido para uma imagem PGM.
             if (val < 0.0f)
@@ -337,7 +335,7 @@ void save_image(const char *arquivo_saida) {
  *    original e a imagem suavizada;
  * 3. Aplicação da máscara sobre a imagem original para realizar o realce.
  *
- * A matriz img.resultado é reutilizada entre as etapas. Inicialmente,
+ * A matriz resultado é reutilizada entre as etapas. Inicialmente,
  * ela armazena a imagem suavizada e posteriormente é sobrescrita com
  * a imagem final.
  *
@@ -378,13 +376,13 @@ void unsharp_masking(float ganho_k) {
                     int idx_j = refletir_indice(j + kj, width);
 
                     // Realiza a convolução:
-                    soma_ponderada += img.original[idx_i][idx_j] * kernel_desfoque[ki + 1][kj + 1];
+                    soma_ponderada += original[idx_i][idx_j] * kernel_desfoque[ki + 1][kj + 1];
                 }
             }
 
             //  Armazena temporariamente a imagem suavizada.
             //  A matriz resultado será posteriormente reutilizada para armazenar a imagem final.
-            img.resultado[i][j] = soma_ponderada;
+            resultado[i][j] = soma_ponderada;
         }
     }
 
@@ -413,10 +411,10 @@ void unsharp_masking(float ganho_k) {
              * original e o pixel suavizado correspondem principalmente
              * a regiões de borda e detalhes.
              */
-            float mascara = img.original[i][j] - img.resultado[i][j];
+            float mascara = original[i][j] - resultado[i][j];
 
             // Aplica a máscara sobre a imagem original.
-            img.resultado[i][j] = img.original[i][j] + (ganho_k * mascara);
+            resultado[i][j] = original[i][j] + (ganho_k * mascara);
         }
     }
 }
